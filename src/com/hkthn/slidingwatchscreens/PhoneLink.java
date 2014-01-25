@@ -32,6 +32,16 @@ public class PhoneLink extends Service {
 	SharedPreferences prefs;
 	BroadcastReceiver br;
 	
+	Handler h = new Handler(){
+		@Override
+		public void handleMessage(Message msg) {
+			//Object always going to be a string
+			log("Handler received message");
+			String s = (String) msg.obj;
+			handleInput(s);
+		}
+	};
+	
 	static final String TAG = "PhoneLink";
 	
 	public static final String EOS = "<!EOS!>";
@@ -183,7 +193,8 @@ public class PhoneLink extends Service {
 						int eosIndex = stringToSend.indexOf(EOS);
 						if(eosIndex != -1){
 							String toSend = stringToSend.toString();
-							handleInput(toSend);
+							Message m = h.obtainMessage(1, toSend);
+							h.sendMessage(m);
 							stringToSend = new StringBuilder();
 						}
 					}
