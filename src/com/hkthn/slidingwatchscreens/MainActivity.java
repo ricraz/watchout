@@ -8,7 +8,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -16,6 +18,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -31,7 +34,7 @@ public class MainActivity extends Activity {
 	TextView time;
 	TextView date;
 	RelativeLayout mainLayout;
-	RelativeLayout helpLayout;
+	LinearLayout helpLayout;
 	Button helpButton;
 	Button dismissButton;
 	
@@ -52,36 +55,31 @@ public class MainActivity extends Activity {
 		date = (TextView) this.findViewById(R.id.date);
 		helpButton = (Button) this.findViewById(R.id.helpButton);
 		dismissButton = (Button) this.findViewById(R.id.dismissButton);
-		helpLayout = (RelativeLayout) this.findViewById(R.id.helpLayout);
+		helpLayout = (LinearLayout) this.findViewById(R.id.helpLayout);
 		
 		timeFormat = new SimpleDateFormat("h:mm", Locale.US);
-		dateFormat = new SimpleDateFormat("EEEE MMM d", Locale.US);
+		dateFormat = new SimpleDateFormat("EEEE, MMM d", Locale.US);
 
 		mainLayout.setOnTouchListener(new OnTouchListener(){
 			@Override
 			public boolean onTouch(View view, MotionEvent event) {
-				float deltaX = 0;
 				float deltaY = 0;
 				if(startX != NOT_TRIGGERED){
-					deltaX = startX - event.getRawX();
 					deltaY = startY - event.getRawY();
 				}
 				switch(event.getAction()){
 				case MotionEvent.ACTION_UP:
 					log("Action up");
+					if(-deltaY > toPixel(50)){
+						helpLayout.setVisibility(View.VISIBLE);
+					}
 					break;
 				case MotionEvent.ACTION_DOWN:
 					startX = event.getRawX();
 					startY = event.getRawY();
-					helpLayout.setVisibility(View.VISIBLE);
-					helpLayout.offsetTopAndBottom(-dm.heightPixels);
 					log("Action down");
 					break;
 				case MotionEvent.ACTION_MOVE:
-					helpLayout.setVisibility(View.VISIBLE);
-					if(deltaY > 20){
-						helpLayout.offsetTopAndBottom((int)deltaY);
-					}
 					log("Action move");
 					break;
 				}
@@ -99,7 +97,9 @@ public class MainActivity extends Activity {
 		helpButton.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(View v) {
-				
+				Intent i = new Intent();
+				i.setAction(PhoneLink.HELP_INTENT);
+				LocalBroadcastManager.getInstance(MainActivity.this).sendBroadcast(i);
 			}
 		});
 	}
@@ -136,7 +136,11 @@ public class MainActivity extends Activity {
 		t.purge();
 	}
 	
-	public void log(String text){
+	private void log(String text){
 		Log.d(TAG, text);
+	}
+	
+	private int toPixel(int pixels){
+		return (int) Math.ceil(pixels * dm.density);
 	}
 }

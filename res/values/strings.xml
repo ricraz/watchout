@@ -4,5 +4,6 @@
     <string name="app_name">Sliding Watch Screens</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <string name="title_activity_bluetooth_setup">WatchOut Setup</string>
 
 </resources>
