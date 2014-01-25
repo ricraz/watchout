@@ -8,7 +8,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.DisplayMetrics;
@@ -28,6 +31,8 @@ public class MainActivity extends Activity {
 	
 	SimpleDateFormat timeFormat;
 	SimpleDateFormat dateFormat;
+	
+	BroadcastReceiver br;
 	
 	DisplayMetrics dm;
 	
@@ -59,6 +64,22 @@ public class MainActivity extends Activity {
 		
 		timeFormat = new SimpleDateFormat("h:mm", Locale.US);
 		dateFormat = new SimpleDateFormat("EEEE, MMM d", Locale.US);
+		
+		br = new BroadcastReceiver(){
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				if(intent.getAction().equals(PhoneLink.ACK_INTENT)){
+					log("Help request acknowledged");
+					helpButton.setText("SENT");
+				} else if(intent.getAction().equals(PhoneLink.NOTIFICATION_INTENT)){
+					log("Notification intent received");
+				}
+			}
+		};
+		IntentFilter intf = new IntentFilter();
+		intf.addAction(PhoneLink.ACK_INTENT);
+		intf.addAction(PhoneLink.NOTIFICATION_INTENT);
+		LocalBroadcastManager.getInstance(this).registerReceiver(br, intf);
 
 		mainLayout.setOnTouchListener(new OnTouchListener(){
 			@Override
@@ -90,6 +111,7 @@ public class MainActivity extends Activity {
 		dismissButton.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(View view) {
+				helpButton.setText("HELP");
 				helpLayout.setVisibility(View.GONE);
 			}	
 		});

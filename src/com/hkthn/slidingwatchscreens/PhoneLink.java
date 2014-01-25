@@ -3,10 +3,9 @@ package com.hkthn.slidingwatchscreens;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -33,13 +32,14 @@ public class PhoneLink extends Service {
 	SharedPreferences prefs;
 	BroadcastReceiver br;
 	
-	Handler handler;
-	
 	static final String TAG = "PhoneLink";
+	
+	public static final String EOS = "<!EOS!>";
 	
 	public static final String HELP_INTENT = "com.hkthn.slidingwatchscreens.help";
 	public static final String NOTIFICATION_INTENT = "com.hkthn.slidingwatchscreens.notification";
 	public static final String HELP_RESULT_INTENT = "com.hkthn.slidingwatchscreens.help_result";
+	public static final String ACK_INTENT = "com.hkthn.slidingwatchscreens.help_ack";
 	public static final int NOTIFICATION_ID = 300;
 	
 	public static final String UUID = "7bcc1440-858a-11e3-baa7-0800200c9a66";
@@ -57,8 +57,7 @@ public class PhoneLink extends Service {
 					log("Got help request");
 					//Send to phone if possible
 					if(io != null){
-						byte[] bytes = new byte[10];
-						io.write(bytes);
+						io.write("HELP_REQUEST|Generic help request");
 					}
 				}
 			}
@@ -75,14 +74,6 @@ public class PhoneLink extends Service {
 		this.startForeground(NOTIFICATION_ID, n);
 		
 		ba = BluetoothAdapter.getDefaultAdapter();
-		
-		handler = new Handler(new Handler.Callback(){
-			@Override
-			public boolean handleMessage(Message msg) {
-				//Only thing to handle is "read" data, so it's ok
-				return false;
-			}
-		});
 	
 		attemptToJoin();
 	}
@@ -136,6 +127,30 @@ public class PhoneLink extends Service {
 		}
 	}
 	
+	private void handleInput(String dataIn){
+		log("Data in: " + dataIn);
+		dataIn = (String) dataIn.subSequence(0, dataIn.indexOf(EOS));
+		int barPos = dataIn.indexOf("|");
+		if(barPos != -1){
+			String requestType = dataIn.substring(0, barPos);
+			String requestData = dataIn.substring(barPos+1);
+			log("Request type: " + requestType);
+			log("Request data: " + requestData);
+			if(requestType.equals("HELP_ACK")){
+				Intent i = new Intent();
+				i.setAction(ACK_INTENT);
+				LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+			} else if (requestType.equals("NOTIFICATION")){
+				Intent i = new Intent();
+				i.setAction(NOTIFICATION_INTENT);
+				i.putExtra("data", requestData);
+				LocalBroadcastManager.getInstance(this).sendBroadcast(i);
+			}
+		} else {
+			log("Error! Improper formatting");
+		}
+	}
+	
 	private class IOThread extends Thread {
 		private final BluetoothSocket bs;
 		private final InputStream is;
@@ -157,27 +172,36 @@ public class PhoneLink extends Service {
 		
 		public void run(){
 			log("Running IOThread...");
+			StringBuilder stringToSend = new StringBuilder();
 			byte[] readBuffer = new byte[1024];
-			int bytesIn;
-			
+			int newBytes;
+
 			while(true){
 				try {
-					bytesIn = is.read(readBuffer);
-					handler.obtainMessage(1, bytesIn, -1, readBuffer);
-					//Send to UI
+					while((newBytes = is.read(readBuffer)) != -1){ //So long as we're not at the end of stream
+						stringToSend.append(new String(readBuffer, 0, newBytes, Charset.defaultCharset()));
+						int eosIndex = stringToSend.indexOf(EOS);
+						if(eosIndex != -1){
+							String toSend = stringToSend.toString();
+							handleInput(toSend);
+							stringToSend = new StringBuilder();
+						}
+					}
 				} catch (Exception e) {
 					log("IOThread done; connection lost");
 					this.cancel();
 					attemptToJoin();
-					break; //Done!
+					break; //done -- connection lost
 				}
 			}
 		}
 		
-		public void write(byte[] bytesOut){
+		public void write(String dataIn){
 			log("Writing bytes to output streams");
+			dataIn = dataIn + EOS;
 			try {
-				os.write(bytesOut);
+				byte[] dataBytes = dataIn.getBytes();
+				os.write(dataBytes);
 			} catch (Exception e) {}
 		}
 		
