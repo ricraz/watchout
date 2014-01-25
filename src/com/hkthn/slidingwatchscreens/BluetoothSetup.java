@@ -6,7 +6,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -30,6 +30,8 @@ public class BluetoothSetup extends Activity {
 	BluetoothAdapter btAdapter;
 	
 	BluetoothDevice[] devices;
+	
+	boolean isStarted = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,7 +60,15 @@ public class BluetoothSetup extends Activity {
 			@Override
 			public void onClick(View v) {
 				Intent phoneLink = new Intent(BluetoothSetup.this, PhoneLink.class);
-				BluetoothSetup.this.startService(phoneLink);
+				if(!isStarted){
+					BluetoothSetup.this.startService(phoneLink);
+					startService.setText("Stop Service");
+					isStarted = true;
+				} else {
+					BluetoothSetup.this.stopService(phoneLink);
+					startService.setText("Start Service");
+					isStarted = false;
+				}
 			}
 		});
 		
