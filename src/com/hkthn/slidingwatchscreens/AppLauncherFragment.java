@@ -1,6 +1,8 @@
 package com.hkthn.slidingwatchscreens;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.app.ActivityManager;
@@ -13,6 +15,7 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -47,29 +50,27 @@ public class AppLauncherFragment extends Fragment {
 		}
 	}
 	
+	public static final String TAG = "AppLauncherFragment";
+	
 	ListView appView;
-	List<AppButton> appList;
 	PackageManager pm;
-	ActivityManager am;
 	LayoutInflater li;
+	ActivityManager am;
 	
 	@Override
-	public LayoutInflater getLayoutInflater(Bundle savedInstanceState) {
-		li = super.getLayoutInflater(savedInstanceState);
-		return li;
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
+		ViewGroup mainView = (ViewGroup) inflater.inflate(R.layout.fragment_app_launcher, container, false);
+		return mainView;
 	}
 	
-	@Override
-	public View getView() {
-		return li.inflate(R.layout.fragment_app_launcher, null);
-	}
-
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		
 		pm = this.getActivity().getPackageManager();
 		am = (ActivityManager) this.getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+		
+		li = this.getLayoutInflater(savedInstanceState);
 		
 		AppListGetter getter = new AppListGetter();
 		getter.execute();
@@ -94,8 +95,6 @@ public class AppLauncherFragment extends Fragment {
 	@Override
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
-		
-		appList = new ArrayList<AppButton>();
 	}
 	
 	@Override
@@ -103,22 +102,23 @@ public class AppLauncherFragment extends Fragment {
 		super.onDestroy();
 	}
 	
-	private void updateUI(){
+	private void updateUI(List<AppButton> list){
 		if(appView != null){
-			AppAdapter aa = new AppAdapter();
+			AppAdapter aa = new AppAdapter(list);
 			appView.setAdapter(aa);
 		}
 	}
 	
-	private class AppListGetter extends AsyncTask<Void, Void, Void>{
+	private class AppListGetter extends AsyncTask<Void, Void, List<AppButton>>{
 		@Override
-		protected void onPostExecute(Void result) {
+		protected void onPostExecute(List<AppButton> result) {
 			//Update UI
-			updateUI();
+			updateUI(result);
 		}
 
 		@Override
-		protected Void doInBackground(Void... arg0) {
+		protected List<AppButton> doInBackground(Void... arg0) {
+			List<AppButton> appList = new ArrayList<AppButton>();
 			List<PackageInfo> pi = pm.getInstalledPackages(0);
 			for(PackageInfo p : pi){
 				Intent launchIntent = pm.getLaunchIntentForPackage(p.packageName);
@@ -129,11 +129,23 @@ public class AppLauncherFragment extends Fragment {
 					}
 				}
 			}
-			return null;
+			Collections.sort(appList, new Comparator<AppButton>(){
+				@Override
+				public int compare(AppButton arg0, AppButton arg1) {
+					return arg0.label.compareTo(arg1.label);
+				}
+			});
+			return appList;
 		}	
 	}
 	
 	private class AppAdapter implements ListAdapter {
+		List<AppButton> appList;
+		
+		public AppAdapter(List<AppButton> list){
+			this.appList = list;
+		}
+		
 		@Override
 		public int getCount() {
 			return appList.size();
@@ -159,7 +171,7 @@ public class AppLauncherFragment extends Fragment {
 			View newView = convertView;
 			if(convertView == null){
 				newView = li.inflate(R.layout.app_button, null);
-			}
+			} 
 			((TextView)newView.findViewById(R.id.appText)).setText(appList.get(pos).getLabel());
 			((ImageView)newView.findViewById(R.id.appIcon)).setImageDrawable(appList.get(pos).getIcon());
 			newView.findViewById(R.id.appButton).setOnClickListener(new OnClickListener(){
@@ -168,7 +180,7 @@ public class AppLauncherFragment extends Fragment {
 					AppLauncherFragment.this.startActivity(appList.get(pos).getLaunchIntent());
 				}
 			});
-			return null;
+			return newView;
 		}
 
 		@Override
@@ -203,5 +215,9 @@ public class AppLauncherFragment extends Fragment {
 		@Override
 		public void unregisterDataSetObserver(DataSetObserver observer) {
 		}
+	}
+	
+	private void log(String text){
+		Log.d(TAG, text);
 	}
 }

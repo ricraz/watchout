@@ -35,24 +35,36 @@
 
         <LinearLayout
             android:id="@+id/notificationLayout"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:orientation="vertical"
             android:visibility="gone" >
-
-            <ImageView
-                android:id="@+id/icon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_margin="4dp"
-                android:src="@drawable/ic_launcher" />
 
             <TextView
                 android:id="@+id/text"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:text="Demo Notifcation"
-                android:textAppearance="?android:attr/textAppearanceMedium" />
+                android:gravity="center"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+            
+            <TextView
+                android:id="@+id/text2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@android:color/white"
+                android:textSize="14sp" />
+
         </LinearLayout>
 
     </LinearLayout>
@@ -64,7 +76,7 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
             android:orientation="vertical"
-            android:visibility="visible" >
+            android:visibility="gone" >
 
         <Button
             android:id="@+id/helpButton"
@@ -87,5 +99,51 @@
             android:textSize="24sp" />
 
     </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/allNotifications"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone" >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/black" >
+
+                <ImageView
+                    android:id="@+id/hideNL"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:src="@drawable/go_up_button" />
+
+                <ImageView
+                    android:id="@+id/dismissAll"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:src="@drawable/hide_button" />
+
+            </LinearLayout>
+
+            <ScrollView
+                android:id="@+id/nCSV"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@android:color/black" >
+
+                <LinearLayout
+                    android:id="@+id/nContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical" >
+
+                </LinearLayout>
+            </ScrollView>
+
+        </LinearLayout>
 
 </RelativeLayout>

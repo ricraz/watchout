@@ -48,6 +48,7 @@ public class PhoneLink extends Service {
 	
 	public static final String HELP_INTENT = "com.hkthn.slidingwatchscreens.help";
 	public static final String NOTIFICATION_INTENT = "com.hkthn.slidingwatchscreens.notification";
+	public static final String DISMISS_INTENT = "com.hkthn.slidingwatchscreens.dismiss";
 	public static final String HELP_RESULT_INTENT = "com.hkthn.slidingwatchscreens.help_result";
 	public static final String ACK_INTENT = "com.hkthn.slidingwatchscreens.help_ack";
 	public static final int NOTIFICATION_ID = 300;
@@ -69,11 +70,18 @@ public class PhoneLink extends Service {
 					if(io != null){
 						io.write("HELP_REQUEST|Generic help request");
 					}
+				} else if(intent.getAction().equals(DISMISS_INTENT)){
+					log("Got dismiss request");
+					//Send to phone if possible
+					if(io != null){
+						io.write("DISMISS|" + intent.getStringExtra("data"));
+					}
 				}
 			}
 		};
 		IntentFilter intf = new IntentFilter();
 		intf.addAction(HELP_INTENT);
+		intf.addAction(DISMISS_INTENT);
 		LocalBroadcastManager.getInstance(this).registerReceiver(br, intf);
 		
 		Notification n = new Notification();
@@ -226,12 +234,10 @@ public class PhoneLink extends Service {
 	
 	private class JoinThread extends Thread {
 		private final BluetoothSocket aWildSockAppeared;
-		private final BluetoothDevice yayDevice;
 		
 		public JoinThread(BluetoothDevice bd){
 			log("Create BluetoothSocket from UUID");
 			BluetoothSocket temp = null;
-			yayDevice = bd;
 			
 			try {
 				temp = bd.createRfcommSocketToServiceRecord(java.util.UUID.fromString(UUID));
